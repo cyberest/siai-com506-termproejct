@@ -1,0 +1,139 @@
+# Docker container control
+# ==============================
+# To run:
+# docker-compose up -d
+# Reference: Install Elasticsearch with Docker
+# https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#docker
+
+version: '2.2'
+services:
+  
+  jupyter_python:
+    image: com506_jupyter_python:latest
+    container_name: com506_jupyter_python
+    ports:
+      - 10001:10001
+    networks:
+      - elastic
+    volumes:
+      - ./:/root/work
+    user: root
+
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: com506_es01
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - elastic
+    healthcheck:
+      test: curl -s http://es01:9200 >/dev/null || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 50
+
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: com506_es02
+    environment:
+      - node.name=es02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data02:/usr/share/elasticsearch/data
+    networks:
+      - elastic
+    healthcheck:
+      test: curl -s http://es02:9200 >/dev/null || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 50
+
+  es03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.2
+    container_name: com506_es03
+    environment:
+      - node.name=es03
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data03:/usr/share/elasticsearch/data
+    networks:
+      - elastic
+    healthcheck:
+      test: curl -s http://es03:9200 >/dev/null || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 50
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.5.2
+    container_name: com506_kibana
+    restart: always
+    depends_on: { 
+      "es01": { "condition": "service_healthy" }, 
+      "es02": { "condition": "service_healthy" }, 
+      "es03": { "condition": "service_healthy" } 
+    }
+    ports:
+      - 5601:5601
+    environment:
+      - SERVER_NAME=localhost
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=5601
+      - SERVER_PUBLICBASEURL="http://localhost:5601/"
+      - ELASTICSEARCH_HOSTS=["http://es01:9200","http://es02:9200","http://es03:9200"]
+    networks:
+      - elastic
+
+volumes:
+  data01: # if empty: make (virtual) volume managed by docker
+    # http://blog.code4hire.com/2018/06/define-named-volume-with-host-mount-in-the-docker-compose-file/
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/data/elasticsearch/es01
+      o: bind
+  data02:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/data/elasticsearch/es02
+      o: bind
+  data03:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/data/elasticsearch/es03
+      o: bind
+
+networks:
+  elastic:
+    driver: bridge
