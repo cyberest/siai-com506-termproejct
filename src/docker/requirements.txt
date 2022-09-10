@@ -12,4 +12,5 @@ jupyter==1.0.0
 
 # Database handling
 sqlalchemy==1.4.41
-elasticsearch==8.4.1
+elasticsearch==7.17.6
+iplantuml==0.1.1

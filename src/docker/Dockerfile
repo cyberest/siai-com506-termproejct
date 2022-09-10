@@ -10,10 +10,6 @@ FROM python:3.7-slim
 
 RUN python -m pip install --upgrade pip
 
-# Install required Python packages
-COPY ./requirements.txt ./requirements.txt
-RUN pip install -r ./requirements.txt
-
 # Intsall web browser and virtual display for Selenium
 # https://velog.io/@jmon/%EC%9A%B0%EB%B6%84%ED%88%AC-%EC%84%9C%EB%B2%84%EC%97%90%EC%84%9C-%ED%8C%8C%EC%9D%B4%EC%8D%AC-%EC%85%80%EB%A0%88%EB%8B%88%EC%9B%80-%EC%82%AC%EC%9A%A9%ED%95%98%EA%B8%B0-Ubuntu-Server-Python-Selenium-JMON
 WORKDIR /root
@@ -31,6 +27,14 @@ RUN apt-get install unzip xvfb -y \
   && wget -N https://chromedriver.storage.googleapis.com/105.0.5195.52/chromedriver_linux64.zip \
   && unzip chromedriver_linux64.zip \
   && rm chromedriver_linux64.zip
+# Install Tor service to use proxy
+RUN apt-get install tor -y \
+  && service tor start
+
+# Install required Python packages
+# (Rebuilds upon every requirements file change)
+COPY ./requirements.txt ./requirements.txt
+RUN pip install -r ./requirements.txt
 
 # Generate jupyter configs
 # COPY jupyter_server_config.py /etc/jupyter/
@@ -42,7 +46,7 @@ RUN jupyter notebook --generate-config \
 # supports http only, source and destination port must be the same
 RUN echo "c.NotebookApp.allow_origin='https://colab.research.google.com'" >> /root/.jupyter/jupyter_notebook_config.py \
   && echo "c.NotebookApp.port_retries=0" >> /root/.jupyter/jupyter_notebook_config.py \
-  && pip install --upgrade jupyter_http_over_ws>=0.0.7 \
+  && pip install --upgrade jupyter_http_over_ws==0.0.7 \
   && jupyter serverextension enable --py jupyter_http_over_ws
 
 # Launch jupyter notebook server

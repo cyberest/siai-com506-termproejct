@@ -1,7 +1,11 @@
 # Docker container control
 # ==============================
+# Before run, in host (for every reboot):
+# sudo sysctl -w vm.max_map_count=262144
+# sudo sysctl -p
 # To run:
 # docker-compose up -d
+
 # Reference: Install Elasticsearch with Docker
 # https://www.elastic.co/guide/en/elasticsearch/reference/7.5/docker.html#docker
 
