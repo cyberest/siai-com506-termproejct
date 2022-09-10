@@ -1,9 +1,7 @@
 # Data store
-/data/**
 # keep folder structure (exclude folder itself from ignoring)
-!/data/**/
+/data/**
 /output/**
-!/output/**/
 .vscode/
 
 # Byte-compiled / optimized / DLL files
