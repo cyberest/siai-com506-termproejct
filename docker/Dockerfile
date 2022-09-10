@@ -32,7 +32,8 @@ RUN apt-get install tor -y \
   && service tor start
 # Install cron (and its task) to automate script run
 RUN apt-get install nano cron -y \
-  && (crontab -l ; echo "45 21 * * * /root/work/scheduled_run.sh") | crontab -
+  && (crontab -l ; echo "00 13 * * * /root/work/scheduled_run.sh") | crontab - \
+  && service cron restart
 
 # Install required Python packages
 # (Rebuilds upon every requirements file change)

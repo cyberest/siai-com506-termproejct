@@ -50,32 +50,39 @@ git clone https://github.com/cyberest/COM506.git
 
 ### Setup
 Build a docker image using the DockerFile
+```
+docker build --tag com506_jupyter_python ./docker/Dockerfile
+```
 
-```
-docker build --tag <your_choice> ./docker/Dockerfile
-```
-you can find the newly created
+you can check the newly created image here
 ```
 docker images
 ```
 
+Before docker-compose up, need to run belew at host to get enough virtual memory for docker containers
+(Unless, your Elasticsearch containers will be off as soon as they are up)
+```
+sudo sysctl -w vm.max_map_count=262144
+sudo sysctl -p
+```
 
-Start a group of related docker containers
+Now start a group of related docker containers
 ```
 docker-compose up -d
 ```
 
-upon modification, rebuild with the command
-```
-docker build --tag [태그명] .
-```
-
 ## How to Run
-1. To set the configurations, use ```config.ini```.
+1. To modify the configurations, use ```config.ini```.
 
-2. To initiate a scraping batch, use the command below.
+2. Connect to the docker container with bash.
 ```
-python main.py -export_opt=<export_option> -clean=<true or false (optional)>
+docker exec -it com506_jupyter_python /bin/bash
+```
+
+3. To initiate a scraping batch, use the command below.
+```
+cd root/work
+python main.py -export_opt <export_option> -clean <true or false (optional)>
 ```
 Possible options for ```<export_option>``` are:
 - csv: download as CSV file at ```/output```
@@ -83,7 +90,7 @@ Possible options for ```<export_option>``` are:
 - nosql: upload to Elasticsearch
 - all: csv, sql and nosql
 
-3. To visualize data, Kibana is provided as a part of docker-compose. However, nothing is implemented yet.
+4. For visualization, Kibana is provided as a part of docker-compose. However, nothing is implemented yet.
 
 
 ## Contributors
