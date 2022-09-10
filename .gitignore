@@ -1,7 +1,17 @@
 # Data store
-# to keep (empty) folder structure, create .gitkeep file there
-/data/**
-/output/**
+/data/elasticsearch/es01/**
+# keep the folder not to ignored
+# to keep empty folder, create .gitkeep file there
+!/data/elasticsearch/es01
+/data/elasticsearch/es02/**
+!/data/elasticsearch/es02
+/data/elasticsearch/es03/**
+!/data/elasticsearch/es03
+/data/images/**
+!/data/images
+/data/sqlite/**
+!/data/sqlite
+*.csv
 .vscode/
 
 # Byte-compiled / optimized / DLL files
