@@ -1,5 +1,5 @@
 # Data store
-# keep folder structure (exclude folder itself from ignoring)
+# to keep (empty) folder structure, create .gitkeep file there
 /data/**
 /output/**
 .vscode/
