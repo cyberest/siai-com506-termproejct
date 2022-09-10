@@ -18,7 +18,8 @@ def rand_sleep(sec=0):
     time.sleep(sec * (random.random()+1))
 
 # Store images into filesystem instead of database
-def save_image(url):
+def save_image(url, image_dir):
+    IMAGE_DIR = image_dir
     rand_sleep()
 
     # restart Tor to get new proxy

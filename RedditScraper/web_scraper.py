@@ -1,7 +1,10 @@
-# Library import
+# Web scraper
 # ===================
 
 from timeit import default_timer as timer
+import os
+import shutil
+import random
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.service import Service
@@ -10,21 +13,27 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+from .helper_functions import rand_sleep, save_image, hash_file
+
 
 class RedditScraper():
 
-    def __init__(self, subreddit="wallstreetbets"):
-        self.base_url = BASE_URL
+    def __init__(self, subreddit, base_url, image_dir, user_agents, list_moderators):
+        self.base_url = base_url
         self.subreddit = subreddit.strip()
-        self.url = BASE_URL + "/r/" + self.subreddit
+        self.url = self.base_url + "/r/" + self.subreddit
         self.threads = [] # list of dicts
         self.threads_df = None # Pandas DataFrame
 
-    # Cleanup data upon closing instance
-    def cleanup(self):
-        # Remove all images downloaded
-        shutil.rmtree(IMAGE_DIR)
-        os.makedirs(IMAGE_DIR)
+        self.IMAGE_DIR = image_dir
+        self.USER_AGENTS = user_agents
+        self.LIST_MODERATORS = list_moderators
+
+    # Cleanup image data
+    def cleanup_image(self):
+        # Remove images downloaded
+        shutil.rmtree(self.IMAGE_DIR)
+        os.makedirs(self.IMAGE_DIR)
 
     # Initiate Selenium and Chorme webdriver
     def init_selenium_driver(self):
@@ -38,7 +47,7 @@ class RedditScraper():
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('user-agent={0}'.format(random.choice(USER_AGENTS)))
+        options.add_argument('user-agent={0}'.format(random.choice(self.USER_AGENTS)))
         # Used proxy to avoid IP ban
         options.add_argument('--proxy-server=socks5://127.0.0.1:9050')
 
@@ -56,7 +65,7 @@ class RedditScraper():
         collapsed_expand_obj = driver.find_elements(
             By.XPATH, 
             "//div[contains(@class, 'expando-button') and contains(@class, 'collapsed')]"
-        );
+        )
         for expand_button in collapsed_expand_obj:
             # click to expand content area
             expand_button.click()
@@ -64,7 +73,10 @@ class RedditScraper():
             # (Explicitly) wait until (javescript-based) content area is fully loaded
             post_obj = expand_button.find_element(By.XPATH, "../..") # select grandparent
             content_obj = post_obj.find_element(By.CLASS_NAME, "expando") # where content is shown
-            WebDriverWait(driver, 20).until(EC.visibility_of(content_obj))
+            try:
+                WebDriverWait(driver, 10).until(EC.visibility_of(content_obj))
+            except Exception as e:
+                continue
 
         print('BeautifulSoup: page source loaded succesfully.')
         return BeautifulSoup(driver.page_source, "html.parser")
@@ -86,7 +98,7 @@ class RedditScraper():
         author_name = post.find("a", class_="author").text
         author_id = post.attrs['data-author-fullname']
         # Moderator list is hard-coded for /r/wallstreetbets
-        author_ismod = (author_name in LIST_MODERATORS)
+        author_ismod = (author_name in self.LIST_MODERATORS)
         
         post_likes = post.find("div", attrs={"class": "score unvoted"})
         post_likes = 0 if post_likes.text == "•" else int(post_likes.attrs['title'])
@@ -138,13 +150,13 @@ class RedditScraper():
                     imgs = content_area.find_all("div", class_="media-preview-content")
                     for img in imgs:
                         # do not store image(file) into database
-                        img_path = save_image(img.find("img")["src"])
+                        img_path = save_image(img.find("img")["src"], self.IMAGE_DIR)
                         # instead, store file hash as a link to saved file
                         img_hash = hash_file(img_path)
                         post_media.append(img_hash)
                 # if content is single image
                 elif is_image:
-                    img_path = save_image(is_image.find("img")["src"])
+                    img_path = save_image(is_image.find("img")["src"], self.IMAGE_DIR)
                     img_hash = hash_file(img_path)
                     post_media.append(img_hash)
 
@@ -174,7 +186,7 @@ class RedditScraper():
         start_time = timer()
         # Disguise headers to avoid IP ban
         headers = {
-            "User-Agent": random.choice(USER_AGENTS),
+            "User-Agent": random.choice(self.USER_AGENTS),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"    
         }
         driver = self.init_selenium_driver()
@@ -214,7 +226,8 @@ class RedditScraper():
             # For every page request, pause not to reach rate limit
             rand_sleep()
 
-            # Skipped pages afterwards due to IP ban
+            # Stop here due to increasing "connection refused" error beyond this point:
+            # Guess: someone or some algorithm is blocking repeated requests
             if page_counter == 1:
                 break
 

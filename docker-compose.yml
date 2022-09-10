@@ -1,9 +1,10 @@
 # Docker container control
 # ==============================
-# Before run, in host (for every reboot):
+# Before docker-compose up, need to run belew at host to get enough virtual memory for docker containers
+# (This setting is restored for every host reboot)
 # sudo sysctl -w vm.max_map_count=262144
 # sudo sysctl -p
-# To run:
+# To run (headless):
 # docker-compose up -d
 
 # Reference: Install Elasticsearch with Docker

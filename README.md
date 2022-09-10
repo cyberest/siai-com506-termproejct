@@ -1,121 +1,115 @@
-<!-- https://github.com/annguy/customer-sentiment-monitor -->
-<!-- https://innerjoin.bit.io/making-a-simple-data-pipeline-part-2-scheduling-etl-and-post-load-transformations-3e8517c59eab -->
+# Estimating the impact of community activities to short squeeze in the financial market
 
-# Project charter
-1. Problem statement
-2. Business case
-3. Goals & Objectives
-4. Work scope
-5. Timeline
-6. Responsibilities
+## Proejct charter
 
+### Problem statement
 
-# System Design for a Data-Driven and Explainable Customer Sentiment Monitor Using IoT and Enterprise Data
+[r/wallstreetbets](https://www.reddit.com/r/wallstreetbets/) is a subreddit where participants discuss stock and options trading.
+It is widely known that some subreddits, including this one, have influenced heavily the financial market.
+In 2021, a phenomenal event happened - so-called the "short squeeze", which forced some hedge fund giants to step back from their short position.
+Here, we try to analyze activities throughout this subreddit and use it, along with the other dataset comes from the traditional finance sector, to estimate the chance of short squeeze happening again.
 
-[Problem statement]
-[Business case]
-Short squeeze 
-[Goals & Objectives]
-<!-- https://innerjoin.bit.io/making-a-simple-data-pipeline-part-1-the-etl-pattern-7ea52c0f3579 -->
-ETL(Extract, Transform, Load)
-Extract, Transform, Load (ETL) is the general procedure of copying data from one or more sources into a destination system which represents the data differently from the source(s) or in a different context than the source(s).
+### Goals & Objectives
+The data collected from web scraping is relatively "unstructured", contrary to most of the data from the financial market.
+The objective of this project is to construct a constant data pipeline, which performs ETL(Extract, Transform, Load) even without human intervention.
+It is the general procedure of copying data from one or more sources into a destination system.
 
-Estimates possibilities
-[Work scope]
-Scrapping Reddit website
-[Timeline]
-Execution and iteration, monitoring
-automation
-[Responsibilities]
-Solely done
+### Work scope
+Reddit itself provides sophisticated data API and there are also lots of third-party data providers.
+In this regard, scraping Reddit website is the smartest way of collecting data in demand.
+Therefore, instead of constructing an advanced web scraping system, we focus on understanding the underlying structure of the Reddit website, which can be extended to the identification of the correct DGP(Data Generating Process) for future analysis.
 
-This project was conducted at the Machine Learning and Data Analytics Lab, Friedrich-Alexander-University Erlangen-Nuremberg (FAU) in cooperation with Siemens Healthineers.
+To be specific:
+- The scraping target is limited to just one subreddit - wallstreetbets.
+- Unfortunately, we have found out that Reddit does not provide any information beyond the most recent 500 posts. 
+- Moreover, Reddit is most likely to monitor unauthorized web scraping which might impact website performance or cost.
+- Considering these restrictions, the work scope of the project is limited to providing a practitioner guideline of the procedure, rather than a complete model.
+- Nevertheless, with the code presented, we can keep gathering the most recent threads from the board.
+- And stored these, including not only text but also images files, in SQL/NoSQL databases (SQLite and Elasticsearch respectively).
 
-The datasets are publicly available for research purposes.
+### Timeline
+Its inefficiency and restrictions mentioned above, this project is most likely a one-off task.
+However, the most simple form of automation is implemeted with cron and bash script.
+Under the current settings, the main scraping script will run every day at the specified time.
+Given any monitoring and logging procedure is not provided, the script should be used with care.
 
-If you would like to get in touch, please contact an.nguyen@fau.de.
+### Responsibilities
+This project is solely conducted by myself and was a part of an educational assignment.
+All responsibilities should be directed to me.
+If you would like to get in touch, please contact ```cyberest@gmail.com```.
 
 
 ## How to install
-These instructions will get you a copy of the project up and running on your local machine
+These instructions will get you a copy of the project up and running on your local machine (or cloud environment, upon your choice)
 
 ### Clone
 Clone this repo to your local machine
+```
+git clone https://github.com/cyberest/COM506.git
+```
 
 ### Setup
-Create environment using the requirements.txt
+Build a docker image using the DockerFile
 
 ```
-# using pip
-pip install -r requirements.txt
-
-# using Conda
-conda create --name <env_name> --file requirements.txt
-```
-
-Activate environment
-
-```
-conda activate customer_sentiment_monitor 
-```
-
-Install src in the new environment
-
-```
-pip install -e.
-```
-
-Register a notebook kernel
-```
-python -m ipykernel install --user --name=customer_sentiment_monitor
-```
-
-upon modification, rebuild with the command
-```
-docker build --tag [태그명] .
+docker build --tag <your_choice> ./docker/Dockerfile
 ```
 you can find the newly created
 ```
 docker images
 ```
 
+
+Start a group of related docker containers
+```
+docker-compose up -d
+```
+
+upon modification, rebuild with the command
+```
+docker build --tag [태그명] .
+```
+
 ## How to Run
-1. To set the configurations, use the config.ini. The model_name, late_fusion_flag and feature_type from config.ini can be used to conduct the experiements. The rest of the configurations are exactly the same as in the paper.
+1. To set the configurations, use ```config.ini```.
 
-2. To run the weekly analysis, use the command below
-
+2. To initiate a scraping batch, use the command below.
 ```
-python main.py
+python main.py -export_opt=<export_option> -clean=<true or false (optional)>
 ```
+Possible options for ```<export_option>``` are:
+- csv: download as CSV file at ```/output```
+- sql: upload to Sqlite
+- nosql: upload to Elasticsearch
+- all: csv, sql and nosql
 
-After each week the results are saved in ```data/interim/```. If you want to continue training, use cont_week from config.ini.
-
-3. To visualize and evaluate ```data/results/results.pickle``` from weekly analysis, ```notebooks/Visualization.ipynb``` can be used. The pdfs from visualization will be saved in ```data/visualizations/```
+3. To visualize data, Kibana is provided as a part of docker-compose. However, nothing is implemented yet.
 
 
 ## Contributors
-[An Nguyen](https://www.mad.tf.fau.de/person/an-nguyen/), 
-[Andrey Kurzyukov](https://github.com/SherlockKA), 
-[Thomas Kittler](https://www.linkedin.com/in/dr-thomas-kittler-a379aa174/), 
-[Stefan Foerstel](https://www.linkedin.com/in/stefan-foerstel/)
-
+[JunYoung Park](https://github.com/cyberest)
 
 ## Project Organization
     ├── data
-    │   ├── results                      <- The result from weekly analysis.
-    │   ├── interim                      <- Intermediate data that has been transformed.
-    │   ├── visualizations               <- The visualization of results from weekly analysis.
-    │   └── raw                          <- The original, immutable data dump.
-    ├── notebooks                        <- Jupyter notebooks. 
-    ├── src                              <- Source code for use in this project.
-        ├── config_parser.py             <- Script to parse configurations into dict.
-        ├── general_helper_functions.py  <- Script with helper functions
-        ├── train_Ensemble.py            <- Script to train XGBoost or RandomForest.
-        ├── train_LSTM.py                <- Script to train LSTM.
-        ├── visualize.py                 <- Script to visualize results from weekly analysis.
+    │   ├── elasticsearch                <- NoSQL database.
+    │   ├── images                       <- Downloaded images renamed by its MD5 hash for future reference.
+    │   └── sqlite                       <- Simple SQL database.
+    ├── docker
+    │   ├── Dockerfile                   <- DockerFile to build main (Jupyter-python) image.
+    │   └── requirement.txt              <- The requirements file for reproducing or updating the environment.
+    ├── notebook
+    │   ├── ER-diagram.ipynb             <- E-R diagram for SQL database.
+    │   ├── Development.ipynb            <- Jupyter notebook with trial&error during development.
+    │   └── NoSQLmap.json                <- NoSQL schema defined.
+    ├── RedditScraper                    
+    │   ├── __init__.py                   
+    │   ├── config_parser.py             <- Script to parse configurations into dict.
+    │   ├── data_manager.py              <- Class for data-related operations.
+    │   ├── helper_functions.py          <- Custom helper functions for web crawling
+    │   └── web_scraper                  <- Powerhorse of the project.
     ├── .gitignore                       <- Files that should be ignored.
-    ├── README.md                        <- The top-level README for developers using this project.
     ├── config.ini                       <- Configurations.
-    ├── requirement.txt                  <- The requirements file for reproducing the analysis environment, e.g.
+    ├── docker-compose.yml               <- Automated orchestration for a group of docker containers.
     ├── main.py                          <- Main code.
-    ├── setup.py                         <- makes project pip installable (pip install -e .) so src can be imported
+    ├── README.md                        <- RTFM(Read The Full Manuel)
+    └── scheduled_run.sh                 <- Automated script for daily run

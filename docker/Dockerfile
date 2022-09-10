@@ -27,9 +27,12 @@ RUN apt-get install unzip xvfb -y \
   && wget -N https://chromedriver.storage.googleapis.com/105.0.5195.52/chromedriver_linux64.zip \
   && unzip chromedriver_linux64.zip \
   && rm chromedriver_linux64.zip
-# Install Tor service to use proxy
+# Install tor service to use proxy
 RUN apt-get install tor -y \
   && service tor start
+# Install cron (and its task) to automate script run
+RUN apt-get install nano cron -y \
+  && (crontab -l ; echo "45 21 * * * /root/work/scheduled_run.sh") | crontab -
 
 # Install required Python packages
 # (Rebuilds upon every requirements file change)

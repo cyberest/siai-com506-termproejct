@@ -1,3 +1,6 @@
+# Config parser
+# ===================
+
 from configparser import ConfigParser
 from ast import literal_eval
 
@@ -20,8 +23,14 @@ def parse_config(config_path):
     config_dict = {
         'DATA_DIR': parser.get('filesystem', 'DATA_DIR'),
         'IMAGE_DIR': parser.get('filesystem', 'IMAGE_DIR'),
-        'BASE_URL': parser.get('filesystem', 'BASE_URL'),
+        'OUTPUT_DIR': parser.get('filesystem', 'OUTPUT_DIR'),
+        'NOSQL_MAPPING': parser.get('filesystem', 'NOSQL_MAPPING'),
+
+        'ELASTIC_SERVER': parser.get('database', 'ELASTIC_SERVER'),
+        
         'USER_AGENTS': literal_eval(parser.get('webscraping', 'USER_AGENTS')),
+
+        'BASE_URL': parser.get('site_specific', 'BASE_URL'),
         'LIST_MODERATORS': literal_eval(parser.get('site_specific', 'LIST_MODERATORS')),
     }
     return config_dict
